@@ -1,0 +1,116 @@
+// Define variables for game elements
+const canvas = document.getElementById("game-canvas");
+const ctx = canvas.getContext("2d");
+const enemyImg = new Image();
+enemyImg.src = "enemy.png";
+const towerImg = new Image();
+towerImg.src = "tower.png";
+const projectileImg = new Image();
+projectileImg.src = "projectile.png";
+const enemySize = 50;
+const towerSize = 60;
+const projectileSize = 10;
+const enemySpeed = 2;
+const projectileSpeed = 5;
+let enemies = [];
+let towers = [];
+let projectiles = [];
+
+// Define classes for game elements
+class Enemy {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.width = enemySize;
+    this.height = enemySize;
+    this.speed = enemySpeed;
+  }
+
+  draw() {
+    ctx.drawImage(enemyImg, this.x, this.y, this.width, this.height);
+  }
+
+  move() {
+    this.x += this.speed;
+  }
+}
+
+class Tower {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.width = towerSize;
+    this.height = towerSize;
+    this.range = 100;
+    this.cooldown = 0;
+  }
+
+  draw() {
+    ctx.drawImage(towerImg, this.x, this.y, this.width, this.height);
+  }
+
+  update() {
+    if (this.cooldown > 0) {
+      this.cooldown--;
+    } else {
+      let target = null;
+      for (let enemy of enemies) {
+        let distance = Math.sqrt((this.x - enemy.x) ** 2 + (this.y - enemy.y) ** 2);
+        if (distance < this.range) {
+          target = enemy;
+          break;
+        }
+      }
+      if (target) {
+        this.shoot(target);
+        this.cooldown = 20;
+      }
+    }
+  }
+
+  shoot(enemy) {
+    projectiles.push(new Projectile(this.x + this.width / 2, this.y + this.height / 2, enemy));
+  }
+}
+
+class Projectile {
+  constructor(x, y, target) {
+    this.x = x;
+    this.y = y;
+    this.width = projectileSize;
+    this.height = projectileSize;
+    this.speed = projectileSpeed;
+    this.target = target;
+  }
+
+  draw() {
+    ctx.drawImage(projectileImg, this.x, this.y, this.width, this.height);
+  }
+
+  move() {
+    let dx = this.target.x - this.x;
+    let dy = this.target.y - this.y;
+    let distance = Math.sqrt(dx ** 2 + dy ** 2);
+    if (distance <= this.speed) {
+      this.target.hit();
+      projectiles.splice(projectiles.indexOf(this), 1);
+    } else {
+      let vx = dx / distance * this.speed;
+      let vy = dy / distance * this.speed;
+      this.x += vx;
+      this.y += vy;
+    }
+  }
+}
+
+// Define functions for game logic
+function spawnEnemy() {
+  enemies.push(new Enemy(-enemySize, Math.random() * (canvas.height - enemySize)));
+}
+
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let enemy of enemies) {
+    enemy.move();
+    enemy.draw();
+    if
